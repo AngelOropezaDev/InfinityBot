@@ -26,7 +26,8 @@
 			"binding": "infinitybot",
 			"database_name": "infinitybot",
 			"database_id": "d44e137f-06a6-4a58-a64b-13c4be21d38e",
-			"migrations_dir": "drizzle"
+			"migrations_dir": "drizzle",
+			"migrations_pattern": "drizzle/*/migration.sql"
 		}
 	],
 	"vectorize": [
