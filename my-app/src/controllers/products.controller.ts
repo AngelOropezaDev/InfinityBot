@@ -1,17 +1,22 @@
 import { AppContext } from "../types/bindings";
 import { ProductService } from "../services/products.service";
+import { createProductSchema } from "../types/products.type";
+import { HTTPException } from "hono/http-exception";
+
 
 
 export const createProduct = async (c: AppContext) => {
-    try {
-        const body = await c.req.json()
-        const service = new ProductService(c.env.infinitybot)
+    const body = await c.req.json()
+    const service = new ProductService(c.env.infinitybot)
 
-        const newProduct = await service.registerProduct(body)
+    const validation = createProductSchema.safeParse(body)
 
-        return c.json({ success: true, data: newProduct })
-
-    } catch (error) {
-        return c.json({ success: false, error: error }, 500)
+    if (!validation.success) {
+        throw new HTTPException(400, { message: validation.error.issues[0].message });
     }
+
+    const newProduct = await service.registerProduct(validation.data)
+
+
+    return c.json({ success: true, data: newProduct }, 201)
 }

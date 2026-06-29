@@ -9,13 +9,7 @@ export class ProductRepository {
     }
 
     async create(data: typeof products.$inferInsert) {
-        try {
+        return await this.db.insert(products).values(data).returning()
 
-            console.log("Datos a insertar:", data);
-            return await this.db.insert(products).values(data).returning()
-        } catch (error) {
-            console.error("DEBUG ERROR DB:", error); // <-- ¡MIRA ESTO EN LA TERMINAL!
-            throw error;
-        }
     }
 }
