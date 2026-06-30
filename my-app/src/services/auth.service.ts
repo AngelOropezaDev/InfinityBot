@@ -2,11 +2,15 @@ import { AuthRepository } from "../repositories/auth.repository";
 import { NewTenant, NewUser } from "../db/types";
 import { HTTPException } from "hono/http-exception";
 import bcrypt from 'bcryptjs'
+import { sign } from "hono/jwt";
+import bcryptjs from "bcryptjs";
 
 export class AuthService {
     private repo: AuthRepository
 
-    constructor(d1: D1Database) {
+
+    constructor(d1: D1Database, private jwtSecret: string) {
+
         this.repo = new AuthRepository(d1)
     }
 
@@ -23,6 +27,41 @@ export class AuthService {
             email: data.user.email,
             password: hashPassword
         })
+    }
+
+    async login(email: string, password: string) {
+        const users = await this.repo.userExists(email)
+        const user = users[0]
+
+        if (!user) {
+            throw new HTTPException(401, { message: 'Credenciales inválidas' });
+        }
+
+        const isPasswordMatch = await bcryptjs.compare(password, user.password)
+
+        if (!isPasswordMatch) {
+            throw new HTTPException(401, { message: 'Credenciales inválidas' });
+        }
+
+        const token = await this.generateAuthToken(user.id, user.tenantId!, user.email, this.jwtSecret)
+
+        return { token, user: { id: user.id, email: user.email } }
+    }
+
+
+
+
+    async generateAuthToken(userId: string, tenantId: string, email: string, secret: string) {
+        const payload = {
+            sub: userId,
+            tenantId: tenantId,
+            email: email,
+            exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24)
+        }
+
+        const token = await sign(payload, secret)
+
+        return token
     }
 
 
